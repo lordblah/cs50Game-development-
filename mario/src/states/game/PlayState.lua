@@ -17,23 +17,10 @@ function PlayState:init()
 
     self.gravityOn = true
     self.gravityAmount = 6
-
-    self.player = Player({
-        x = 0, y = 0,
-        width = 16, height = 20,
-        texture = 'green-alien',
-        stateMachine = StateMachine {
-            ['idle'] = function() return PlayerIdleState(self.player) end,
-            ['walking'] = function() return PlayerWalkingState(self.player) end,
-            ['jump'] = function() return PlayerJumpState(self.player, self.gravityAmount) end,
-            ['falling'] = function() return PlayerFallingState(self.player, self.gravityAmount) end
-        },
-        map = self.tileMap,
-        level = self.level
-    })
-
+    --spawn player
+    self:spawnPlayer()
     self:spawnEnemies()
-
+    --default state of player is falling
     self.player:changeState('falling')
 end
 
@@ -73,6 +60,7 @@ function PlayState:render()
 
     self.player:render()
     love.graphics.pop()
+  
     
     -- render score
     love.graphics.setFont(gFonts['medium'])
@@ -96,6 +84,38 @@ end
 --[[
     Adds a series of enemies to the level randomly.
 ]]
+function PlayState:spawnPlayer()
+  --ensure player enters ground
+    for x = 1, 3 do
+
+        -- flag for whether there's no ground on this column of the level
+        local groundFound = false
+        -- this ends when x reachs above 10
+        for y = 1, self.tileMap.height do
+            if not groundFound then
+                if self.tileMap.tiles[y][x].id == TILE_ID_GROUND then
+                    groundFound = true
+                    self.player = Player({
+                    --right here is where we could changeit it
+                    --this is multipled by 16 
+                    x = (x - 1) * TILE_SIZE,
+                    y = (y - 6) * TILE_SIZE + 2,
+                    width = 16, height = 20,
+                    texture = 'green-alien',
+                    stateMachine = StateMachine {
+                        ['idle'] = function() return PlayerIdleState(self.player) end,
+                        ['walking'] = function() return PlayerWalkingState(self.player) end,
+                        ['jump'] = function() return PlayerJumpState(self.player, self.gravityAmount) end,
+                        ['falling'] = function() return PlayerFallingState(self.player, self.gravityAmount) end
+                    },
+                    map = self.tileMap,
+                    level = self.level
+                })
+              end
+            end
+        end
+      end
+end
 function PlayState:spawnEnemies()
     -- spawn snails in the level
     for x = 1, self.tileMap.width do
